@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ГАИ База данных | Административная панель</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0f1a, #0f1a24, #162b33);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* АВТОРИЗАЦИЯ */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .auth-card {
+            background: linear-gradient(145deg, #1a2a35, #0f1a22);
+            border-radius: 2rem;
+            padding: 2rem;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .auth-card h2 {
+            color: #ffd966;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 1rem;
+            border-radius: 40px;
+            border: none;
+            background: #f4f9ff;
+            font-size: 1rem;
+        }
+
+        .auth-card button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 40px;
+            border: none;
+            background: #2c6e4f;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .auth-card button:hover {
+            background: #3d8b65;
+            transform: scale(0.98);
+        }
+
+        .error-msg {
+            color: #ff9e7a;
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .info-text {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #aaa;
+            text-align: center;
+            border-top: 1px solid #2a4a5a;
+            padding-top: 12px;
+        }
+
+        /* ОСНОВНОЙ КОНТЕЙНЕР */
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: none;
+        }
+
+        /* ШАПКА */
+        .header {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 1.5rem;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            border: 1px solid rgba(255,215,0,0.2);
+        }
+
+        .logo h1 {
+            color: #ffde9c;
+            font-size: 1.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #0a1a24;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+        }
+
+        .user-info span {
+            color: white;
+        }
+
+        .badge-admin {
+            background: #c0392b;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .badge-user {
+            background: #2c6e4f;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+        }
+
+        .badge-banned {
+            background: #555;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+        }
+
+        .logout-btn {
+            background: #7f8c8d;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 40px;
+            cursor: pointer;
+            color: white;
+        }
+
+        /* ТАБЫ */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: #1e3a4d;
+            padding: 10px 24px;
+            border-radius: 40px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #ffb347;
+            color: #1e2a2e;
+        }
+
+        /* ПАНЕЛИ */
+        .panel {
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .panel.active-panel {
+            display: block;
+        }
+
+        /* ФОРМА ДОБАВЛЕНИЯ */
+        .form-card {
+            background: #0c1b24cc;
+            border-radius: 1.2rem;
+            padding: 1.2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #2c6e4f;
+        }
+
+        .form-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .form-grid input, .form-grid select, .form-grid textarea {
+            flex: 1;
+            min-width: 150px;
+            padding: 8px 12px;
+            border-radius: 30px;
+            border: none;
+            background: #f0f5fa;
+        }
+
+        .btn-primary {
+            background: #2c6e4f;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-danger {
+            background: #8b3c2c;
+        }
+
+        /* ТАБЛИЦЫ */
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #eef4ff;
+            font-size: 0.85rem;
+        }
+
+        th {
+            background: #1f3b48;
+            padding: 12px 8px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #2d5a6e;
+            background: #0f2029b3;
+        }
+
+        tr:hover td {
+            background: #1a3f4e;
+        }
+
+        .delete-post-btn, .ban-user-btn, .unban-user-btn {
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 0.7rem;
+            margin: 2px;
+        }
+
+        .delete-post-btn {
+            background: #a13e2c;
+        }
+
+        .ban-user-btn {
+            background: #e67e22;
+        }
+
+        .unban-user-btn {
+            background: #27ae60;
+        }
+
+        .author-sign {
+            font-size: 0.7rem;
+            color: #aac8e0;
+        }
+
+        .banned-row {
+            opacity: 0.6;
+            background: #2c2c2c;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+        }
+
+        .alert {
+            background: #c0392b;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- МОДАЛКА АВТОРИЗАЦИИ -->
+<div id="authModal" class="auth-overlay">
+    <div class="auth-card">
+        <h2>🚔 ГАИ База данных</h2>
+        <input type="text" id="loginUsername" placeholder="Логин" autocomplete="off">
+        <input type="password" id="loginPassword" placeholder="Пароль">
+        <button id="authBtn">Войти</button>
+        <div id="authError" class="error-msg"></div>
+        <div class="info-text">
+            🔐 Администратор: специальный доступ<br>
+            👤 Обычные пользователи: регистрируются автоматически<br>
+            <span style="color:#ffd966;">⭐ Админ логин: GAIA_ADMIN | пароль: SuperSecret123</span>
+        </div>
+    </div>
+</div>
+
+<!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
+<div id="mainApp" class="main-container">
+    <div class="header">
+        <div class="logo">
+            <h1>🚔 ГАИ · Управление базой</h1>
+        </div>
+        <div class="user-info">
+            <span id="currentUserName">Загрузка...</span>
+            <span id="userRoleBadge"></span>
+            <button id="logoutMainBtn" class="logout-btn">Выйти</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="posts">📋 Записи ГАИ</button>
+        <button class="tab-btn" data-tab="users" id="usersTabBtn">👥 Управление пользователями</button>
+        <button class="tab-btn" data-tab="stats">📊 Статистика</button>
+    </div>
+
+    <!-- Панель: Записи -->
+    <div id="postsPanel" class="panel active-panel">
+        <div class="form-card">
+            <h3 style="color:#ffde9c; margin-bottom:12px;">✍️ Добавить запись в базу</h3>
+            <div class="form-grid">
+                <input type="text" id="postPlate" placeholder="Гос. номер (А123ВС 116)">
+                <input type="text" id="postDriver" placeholder="Водитель (ФИО)">
+                <input type="text" id="postCar" placeholder="Марка/Модель">
+                <select id="postStatus">
+                    <option value="В норме">✅ В норме</option>
+                    <option value="В розыске">⚠️ В розыске</option>
+                    <option value="Угон">🔴 Угон</option>
+                    <option value="Лишение прав">📜 Лишение прав</option>
+                    <option value="Штраф">💰 Штраф</option>
+                </select>
+                <input type="number" id="postFine" placeholder="Штраф (₽)" value="0">
+                <textarea id="postNote" placeholder="Примечание" rows="1"></textarea>
+                <button id="addPostBtn" class="btn-primary">➕ Добавить запись</button>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Госномер</th><th>Водитель</th><th>Авто</th>
+                        <th>Статус</th><th>Штраф</th><th>Примечание</th><th>Автор</th><th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="postsTableBody">
+                    <tr><td colspan="9">Загрузка...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Панель: Пользователи (только админ) -->
+    <div id="usersPanel" class="panel">
+        <h3 style="color:#ffde9c;">👥 Управление пользователями (Админ-панель)</h3>
+        <div class="table-wrapper" style="margin-top: 15px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Логин</th><th>Роль</th><th>Статус</th><th>Дата регистрации</th><th>Кол-во записей</th><th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Панель: Статистика -->
+    <div id="statsPanel" class="panel">
+        <h3 style="color:#ffde9c;">📈 Статистика базы ГАИ</h3>
+        <div id="statsContent"></div>
+    </div>
+</div>
+
+<script>
+    // ========== КЛЮЧИ ХРАНИЛИЩА ==========
+    const STORAGE_USERS = 'gai_users_system';
+    const STORAGE_POSTS = 'gai_posts_system';
+    const SESSION_KEY = 'gai_current_session';
+
+    // СПЕЦИАЛЬНЫЙ АДМИН-ДОСТУП
+    const ADMIN_CREDENTIALS = {
+        username: "GAIA_ADMIN",
+        password: "SuperSecret123"
+    };
+
+    // Стартовые демо-пользователи (кроме админа)
+    let users = [];
+    let posts = [];
+    let currentUser = null;
+
+    // Инициализация
+    function initStorage() {
+        let storedUsers = localStorage.getItem(STORAGE_USERS);
+        if (!storedUsers) {
+            users = [
+                { id: 1, username: "user1", password: "pass123", role: "user", isBanned: false, registered: new Date().toISOString().slice(0,10) },
+                { id: 2, username: "user2", password: "pass123", role: "user", isBanned: false, registered: new Date().toISOString().slice(0,10) }
+            ];
+            localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
+        } else {
+            users = JSON.parse(storedUsers);
+        }
+
+        let storedPosts = localStorage.getItem(STORAGE_POSTS);
+        if (!storedPosts) {
+            posts = [
+                { id: 101, plate: "А777АА 116", driver: "Соколов Дмитрий", carModel: "Lada Vesta", status: "В норме", fine: 0, note: "ОСАГО в порядке", author: "user1", createdAt: new Date().toISOString() },
+                { id: 102, plate: "В123ВС 777", driver: "Кузнецова Анна", carModel: "Hyundai Solaris", status: "Штраф", fine: 2500, note: "Превышение скорости", author: "user2", createdAt: new Date().toISOString() },
+                { id: 103, plate: "О111ОО 50", driver: "Морозов Артем", carModel: "BMW X5", status: "В розыске", fine: 0, note: "Ориентировка!", author: "user1", createdAt: new Date().toISOString() }
+            ];
+            localStorage.setItem(STORAGE_POSTS, JSON.stringify(posts));
+        } else {
+            posts = JSON.parse(storedPosts);
+        }
+    }
+
+    function saveUsers() { localStorage.setItem(STORAGE_USERS, JSON.stringify(users)); }
+    function savePosts() { localStorage.setItem(STORAGE_POSTS, JSON.stringify(posts)); }
+
+    // Авторизация
+    function authUser(login, password) {
+        // Проверка на спец-админа
+        if (login === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+            // Создаем или получаем админа в базе
+            let adminUser = users.find(u => u.username === "GAIA_ADMIN");
+            if (!adminUser) {
+                adminUser = {
+                    id: users.length + 1,
+                    username: "GAIA_ADMIN",
+                    password: "SUPER_SECRET_HASH",
+                    role: "admin",
+                    isBanned: false,
+                    registered: new Date().toISOString().slice(0,10)
+                };
+                users.push(adminUser);
+                saveUsers();
+            }
+            return { ...adminUser, isSpecialAdmin: true };
+        }
+        
+        // Обычная авторизация
+        let user = users.find(u => u.username === login && u.password === password);
+        if (user && !user.isBanned) {
+            return { ...user };
+        }
+        if (user && user.isBanned) {
+            throw new Error("ban");
+        }
+        return null;
+    }
+
+    // Авто-регистрация нового пользователя
+    function registerUser(login, password) {
+        if (users.find(u => u.username === login)) {
+            return null;
+        }
+        const newUser = {
+            id: users.length + 1,
+            username: login,
+            password: password,
+            role: "user",
+            isBanned: false,
+            registered: new Date().toISOString().slice(0,10)
+        };
+        users.push(newUser);
+        saveUsers();
+        return newUser;
+    }
+
+    // Бан пользователя (только админ)
+    function banUser(username) {
+        const user = users.find(u => u.username === username);
+        if (user && user.role !== "admin") {
+            user.isBanned = true;
+            saveUsers();
+            return true;
+        }
+        return false;
+    }
+
+    // Разбан
+    function unbanUser(username) {
+        const user = users.find(u => u.username === username);
+        if (user) {
+            user.isBanned = false;
+            saveUsers();
+            return true;
+        }
+        return false;
+    }
+
+    // Удалить пользователя и все его посты
+    function deleteUser(username) {
+        if (username === "GAIA_ADMIN") return false;
+        users = users.filter(u => u.username !== username);
+        posts = posts.filter(p => p.author !== username);
+        saveUsers();
+        savePosts();
+        return true;
+    }
+
+    // Добавить пост
+    function addPost(plate, driver, carModel, status, fine, note) {
+        if (!plate || !driver || !carModel) {
+            alert('Заполните госномер, водителя и марку авто!');
+            return false;
+        }
+        const newId = posts.length > 0 ? Math.max(...posts.map(p=>p.id)) + 1 : 200;
+        const newPost = {
+            id: newId,
+            plate: plate.trim(),
+            driver: driver.trim(),
+            carModel: carModel.trim(),
+            status: status,
+            fine: parseInt(fine) || 0,
+            note: note.trim(),
+            author: currentUser.username,
+            createdAt: new Date().toISOString()
+        };
+        posts.unshift(newPost);
+        savePosts();
+        return true;
+    }
+
+    // Удалить пост (админ может всё, пользователь только свои)
+    function deletePost(postId) {
+        const post = posts.find(p => p.id === postId);
+        if (!post) return false;
+        if (currentUser.role === 'admin' || post.author === currentUser.username) {
+            posts = posts.filter(p => p.id !== postId);
+            savePosts();
+            return true;
+        }
+        return false;
+    }
+
+    // Рендер постов
+    function renderPosts() {
+        const tbody = document.getElementById('postsTableBody');
+        let html = '';
+        posts.forEach(post => {
+            const isAdmin = currentUser.role === 'admin';
+            const isAuthor = post.author === currentUser.username;
+            const canDelete = isAdmin || isAuthor;
+            
+            // Проверка, не забанен ли автор
+            const authorUser = users.find(u => u.username === post.author);
+            const isAuthorBanned = authorUser?.isBanned;
+            
+            html += `<tr style="${isAuthorBanned ? 'opacity:0.6' : ''}">
+                <td>${post.id}</td>
+                <td><strong>${escapeHtml(post.plate)}</strong></td>
+                <td>${escapeHtml(post.driver)}</td>
+                <td>${escapeHtml(post.carModel)}</td>
+                <td>${post.status}</td>
+                <td>${post.fine.toLocaleString()} ₽</td>
+                <td>${escapeHtml(post.note || '—')}</td>
+                <td><div class="author-sign">✍️ ${escapeHtml(post.author)}<br><small>${new Date(post.createdAt).toLocaleDateString()}</small></div></td>
+                <td>${canDelete ? `<button class="delete-post-btn" data-id="${post.id}">🗑 Удалить</button>` : '—'}</td>
+            </tr>`;
+        });
+        if (posts.length === 0) html = '<tr><td colspan="9">Нет записей в базе</td></tr>';
+        tbody.innerHTML = html;
+
+        document.querySelectorAll('.delete-post-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(btn.getAttribute('data-id'));
+                if (confirm('Удалить эту запись из базы ГАИ?')) {
+                    if (deletePost(id)) {
+                        renderPosts();
+                        renderUsers();
+                        renderStats();
+                    } else {
+                        alert('Нет прав на удаление!');
+                    }
+                }
+            });
+        });
+    }
+
+    // Рендер пользователей (только для админа)
+    function renderUsers() {
+        if (currentUser.role !== 'admin') return;
+        const tbody = document.getElementById('usersTableBody');
+        let html = '';
+        users.forEach(user => {
+            const userPostsCount = posts.filter(p => p.author === user.username).length;
+            html += `<tr>
+                <td>${user.id}</td>
+                <td>${escapeHtml(user.username)} ${user.username === "GAIA_ADMIN" ? '👑' : ''}</td>
+                <td>${user.role === 'admin' ? '⚡ Администратор' : '👤 Пользователь'}</td>
+                <td>${user.isBanned ? '<span class="status-badge" style="background:#c0392b;">🔨 Забанен</span>' : '<span class="status-badge" style="background:#27ae60;">✅ Активен</span>'}</td>
+                <td>${user.registered}</td>
+                <td>${userPostsCount}</td>
+                <td>
+                    ${user.username !== currentUser.username && user.username !== "GAIA_ADMIN" ? 
+                        (user.isBanned ? 
+                            `<button class="unban-user-btn" data-user="${user.username}">🔓 Разбан</button>` : 
+                            `<button class="ban-user-btn" data-user="${user.username}">🔨 Забанить</button>`
+                        ) : ''}
+                    ${user.username !== "GAIA_ADMIN" && user.role !== 'admin' && user.username !== currentUser.username ? 
+                        `<button class="delete-post-btn" data-deluser="${user.username}" style="background:#8b3c2c;">❌ Удалить пользователя</button>` : ''}
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+
+        document.querySelectorAll('.ban-user-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const username = btn.getAttribute('data-user');
+                if (confirm(`Забанить пользователя "${username}"? Он не сможет войти и его записи будут скрыты.`)) {
+                    banUser(username);
+                    renderUsers();
+                    renderPosts();
+                    renderStats();
+                }
+            });
+        });
+
+        document.querySelectorAll('.unban-user-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const username = btn.getAttribute('data-user');
+                unbanUser(username);
+                renderUsers();
+                renderPosts();
+                renderStats();
+            });
+        });
+
+        document.querySelectorAll('[data-deluser]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const username = btn.getAttribute('data-deluser');
+                if (confirm(`УДАЛИТЬ пользователя "${username}" и ВСЕ его записи? Это действие необратимо!`)) {
+                    deleteUser(username);
+                    renderUsers();
+                    renderPosts();
+                    renderStats();
+                }
+            });
+        });
+    }
+
+    function renderStats() {
+        const statsDiv = document.getElementById('statsContent');
+        const activeUsers = users.filter(u => !u.isBanned).length;
+        const bannedUsers = users.filter(u => u.isBanned).length;
+        const totalPosts = posts.length;
+        const wantedCount = posts.filter(p => p.status === 'В розыске').length;
+        const totalFine = posts.reduce((sum, p) => sum + p.fine, 0);
+        
+        const authorStats = {};
+        posts.forEach(p => { authorStats[p.author] = (authorStats[p.author] || 0) + 1; });
+        let topAuthors = Object.entries(authorStats).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([name,count])=>`${name} (${count})`).join(', ');
+        
+        statsDiv.innerHTML = `
+            <div style="background:#0b1a24; padding:1.5rem; border-radius:1rem;">
+                <p>📋 Всего записей: <strong>${totalPosts}</strong></p>
+                <p>⚠️ В розыске: ${wantedCount}</p>
+                <p>💰 Общая сумма штрафов: ${totalFine.toLocaleString()} ₽</p>
+                <p>✍️ Топ авторы: ${topAuthors || 'нет'}</p>
+                <p>👥 Активных пользователей: ${activeUsers} | Забаненных: ${bannedUsers}</p>
+                <p>👑 Администратор: ${currentUser.username}</p>
+            </div>
+        `;
+    }
+
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ return m==='&'?'&amp;': m==='<'?'&lt;':'&gt;';}); }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active-panel'));
+        document.getElementById(`${tabId}Panel`).classList.add('active-panel');
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+        if (tabId === 'users') renderUsers();
+        if (tabId === 'stats') renderStats();
+        if (tabId === 'posts') renderPosts();
+    }
+
+    function loadMainApp(user) {
+        currentUser = user;
+        document.getElementById('currentUserName').innerHTML = `${user.username}`;
+        const badgeSpan = document.getElementById('userRoleBadge');
+        if (user.role === 'admin') {
+            badgeSpan.innerHTML = '<span class="badge-admin">👑 АДМИНИСТРАТОР (полный доступ)</span>';
+            document.getElementById('usersTabBtn').style.display = 'inline-block';
+        } else {
+            badgeSpan.innerHTML = '<span class="badge-user">👤 Пользователь</span>';
+            document.getElementById('usersTabBtn').style.display = 'none';
+        }
+        renderPosts();
+        renderStats();
+        document.getElementById('authModal').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+    }
+
+    // Обработчики
+    document.getElementById('authBtn').addEventListener('click', () => {
+        const login = document.getElementById('loginUsername').value.trim();
+        const pass = document.getElementById('loginPassword').value.trim();
+        if (!login || !pass) {
+            document.getElementById('authError').innerText = 'Введите логин и пароль';
+            return;
+        }
+        try {
+            let user = authUser(login, pass);
+            if (user) {
+                localStorage.setItem(SESSION_KEY, JSON.stringify({ username: user.username, role: user.role }));
+                loadMainApp(user);
+            } else {
+                // Пытаемся зарегистрировать нового пользователя
+                const newUser = registerUser(login, pass);
+                if (newUser) {
+                    alert(`Добро пожаловать, ${login}! Вы зарегистрированы как обычный пользователь.`);
+                    localStorage.setItem(SESSION_KEY, JSON.stringify({ username: newUser.username, role: newUser.role }));
+                    loadMainApp(newUser);
+                } else {
+                    document.getElementById('authError').innerText = 'Неверный логин или пароль, или пользователь забанен';
+                }
+            }
+        } catch(e) {
+            if (e.message === 'ban') {
+                document.getElementById('authError').innerText = '❌ Ваш аккаунт заблокирован администратором!';
+            } else {
+                document.getElementById('authError').innerText = 'Ошибка авторизации';
+            }
+        }
+    });
+
+    document.getElementById('logoutMainBtn').addEventListener('click', () => {
+        localStorage.removeItem(SESSION_KEY);
+        location.reload();
+    });
+
+    document.getElementById('addPostBtn').addEventListener('click', () => {
+        const plate = document.getElementById('postPlate').value;
+        const driver = document.getElementById('postDriver').value;
+        const car = document.getElementById('postCar').value;
+        const status = document.getElementById('postStatus').value;
+        const fine = document.getElementById('postFine').value;
+        const note = document.getElementById('postNote').value;
+        if(addPost(plate, driver, car, status, fine, note)) {
+            document.getElementById('postPlate').value = '';
+            document.getElementById('postDriver').value = '';
+            document.getElementById('postCar').value = '';
+            document.getElementById('postNote').value = '';
+            document.getElementById('postFine').value = '0';
+            renderPosts();
+            renderStats();
+            if (document.getElementById('usersPanel').classList.contains('active-panel')) renderUsers();
+            alert('Запись добавлена!');
+        }
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
+    });
+
+    function checkSession() {
+        const session = localStorage.getItem(SESSION_KEY);
+        if (session) {
+            try {
+                const sessUser = JSON.parse(session);
+                let found = users.find(u => u.username === sessUser.username && !u.isBanned);
+                if (found && found.role === sessUser.role) {
+                    loadMainApp(found);
+                    return;
+                } else if (sessUser.username === "GAIA_ADMIN") {
+                    let admin = users.find(u => u.username === "GAIA_ADMIN");
+                    if (admin) loadMainApp(admin);
+                    return;
+                }
+            } catch(e) {}
+        }
+        document.getElementById('authModal').style.display = 'flex';
+        document.getElementById('mainApp').style.display = 'none';
+    }
+
+    initStorage();
+    checkSession();
+</script>
+</body>
+</html>
