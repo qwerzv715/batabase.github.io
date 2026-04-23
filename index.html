@@ -2,835 +2,602 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ГАИ База данных | Административная панель</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>УГАИ ГУ МВД | Мобильный терминал инспектора + Журнал</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif;
+            user-select: none;
         }
 
         body {
-            background: linear-gradient(135deg, #0a0f1a, #0f1a24, #162b33);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        /* АВТОРИЗАЦИЯ */
-        .auth-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
+            background: #0a1017;
+            font-family: 'Segoe UI', 'Roboto', 'Courier New', monospace;
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: all 0.3s;
+            min-height: 100vh;
+            padding: 16px;
         }
 
-        .auth-card {
-            background: linear-gradient(145deg, #1a2a35, #0f1a22);
-            border-radius: 2rem;
-            padding: 2rem;
-            width: 90%;
-            max-width: 450px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,215,0,0.3);
-        }
-
-        .auth-card h2 {
-            color: #ffd966;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            font-size: 1.8rem;
-        }
-
-        .auth-card input {
+        .terminal {
+            max-width: 560px;
             width: 100%;
-            padding: 12px 16px;
-            margin-bottom: 1rem;
-            border-radius: 40px;
-            border: none;
-            background: #f4f9ff;
-            font-size: 1rem;
+            background: #101b26;
+            border-radius: 36px;
+            box-shadow: 0 25px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            overflow: hidden;
+            border: 1px solid #2c577c;
         }
 
-        .auth-card button {
-            width: 100%;
-            padding: 12px;
-            border-radius: 40px;
-            border: none;
-            background: #2c6e4f;
-            color: white;
+        .status-bar {
+            background: #08101a;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
             font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
+            color: #7d9fc7;
+            border-bottom: 1px solid #244a69;
+            font-family: monospace;
+        }
+
+        .screen {
+            padding: 20px 18px 24px;
+        }
+
+        .auth-card, .dashboard {
             transition: 0.2s;
         }
 
-        .auth-card button:hover {
-            background: #3d8b65;
-            transform: scale(0.98);
+        .auth-title {
+            color: #eef4ff;
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
         }
 
-        .error-msg {
-            color: #ff9e7a;
-            text-align: center;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .info-text {
-            margin-top: 15px;
+        .auth-sub {
+            color: #8aadcf;
             font-size: 12px;
-            color: #aaa;
+            margin-bottom: 28px;
+            border-left: 3px solid #2f8bc0;
+            padding-left: 12px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #c2d8f2;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .input-field {
+            width: 100%;
+            background: #0c1422;
+            border: 1px solid #2f5577;
+            padding: 14px 16px;
+            border-radius: 18px;
+            font-size: 16px;
+            color: #f0f6ff;
+            font-family: 'Courier New', monospace;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: #48a7e8;
+            box-shadow: 0 0 0 2px rgba(72, 167, 232, 0.3);
+        }
+
+        .btn {
+            background: #1f4868;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #f0f9ff;
+            font-family: inherit;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: 0.15s;
             text-align: center;
-            border-top: 1px solid #2a4a5a;
-            padding-top: 12px;
         }
 
-        /* ОСНОВНОЙ КОНТЕЙНЕР */
-        .main-container {
-            max-width: 1600px;
-            margin: 0 auto;
-            display: none;
+        .btn-primary {
+            background: #1f6e9c;
+            border-bottom: 2px solid #0f4362;
         }
+        .btn-primary:active { transform: scale(0.97); background: #175d86; }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #3b789e;
+            color: #cce6ff;
+        }
+        .dashboard { display: none; }
 
-        /* ШАПКА */
-        .header {
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(10px);
-            border-radius: 1.5rem;
-            padding: 1rem 1.5rem;
-            margin-bottom: 1.5rem;
+        .officer-header {
+            background: #0c1624;
+            padding: 12px 16px;
+            border-radius: 28px;
+            margin-bottom: 18px;
+            border: 1px solid #2a5578;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
-            border: 1px solid rgba(255,215,0,0.2);
+        }
+        .officer-name { font-weight: bold; font-size: 18px; color: #d4eaff; }
+        .officer-id { font-family: monospace; color: #8bb3d6; font-size: 11px; }
+
+        .menu-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-bottom: 18px;
         }
 
-        .logo h1 {
-            color: #ffde9c;
-            font-size: 1.5rem;
+        .action-card {
+            background: #122230;
+            border-radius: 28px;
+            border: 1px solid #2b5c82;
+            overflow: hidden;
         }
-
-        .user-info {
+        .card-header {
             display: flex;
             align-items: center;
-            gap: 15px;
-            background: #0a1a24;
-            padding: 0.5rem 1.2rem;
-            border-radius: 40px;
-        }
-
-        .user-info span {
-            color: white;
-        }
-
-        .badge-admin {
-            background: #c0392b;
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
-
-        .badge-user {
-            background: #2c6e4f;
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-        }
-
-        .badge-banned {
-            background: #555;
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-        }
-
-        .logout-btn {
-            background: #7f8c8d;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 40px;
-            cursor: pointer;
-            color: white;
-        }
-
-        /* ТАБЫ */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .tab-btn {
-            background: #1e3a4d;
-            padding: 10px 24px;
-            border-radius: 40px;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        .tab-btn.active {
-            background: #ffb347;
-            color: #1e2a2e;
-        }
-
-        /* ПАНЕЛИ */
-        .panel {
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            display: none;
-        }
-
-        .panel.active-panel {
-            display: block;
-        }
-
-        /* ФОРМА ДОБАВЛЕНИЯ */
-        .form-card {
-            background: #0c1b24cc;
-            border-radius: 1.2rem;
-            padding: 1.2rem;
-            margin-bottom: 2rem;
-            border: 1px solid #2c6e4f;
-        }
-
-        .form-grid {
-            display: flex;
-            flex-wrap: wrap;
             gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .form-grid input, .form-grid select, .form-grid textarea {
-            flex: 1;
-            min-width: 150px;
-            padding: 8px 12px;
-            border-radius: 30px;
-            border: none;
-            background: #f0f5fa;
-        }
-
-        .btn-primary {
-            background: #2c6e4f;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 40px;
-            border: none;
-            cursor: pointer;
+            padding: 12px 18px;
+            background: #0a1a28;
+            border-bottom: 1px solid #245a80;
             font-weight: bold;
+            font-size: 17px;
+            color: #deedff;
         }
-
-        .btn-danger {
-            background: #8b3c2c;
+        .form-row {
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
-
-        /* ТАБЛИЦЫ */
-        .table-wrapper {
-            overflow-x: auto;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            color: #eef4ff;
-            font-size: 0.85rem;
-        }
-
-        th {
-            background: #1f3b48;
-            padding: 12px 8px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        td {
-            padding: 10px 8px;
-            border-bottom: 1px solid #2d5a6e;
-            background: #0f2029b3;
-        }
-
-        tr:hover td {
-            background: #1a3f4e;
-        }
-
-        .delete-post-btn, .ban-user-btn, .unban-user-btn {
-            padding: 4px 12px;
+        .small-input {
+            background: #09131f;
+            border: 1px solid #2f607f;
             border-radius: 20px;
-            border: none;
+            padding: 10px 14px;
             color: white;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .flex-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .flex-row .btn { flex: 1; margin-top: 0; padding: 10px; font-size: 14px; }
+        .output-message {
+            background: #071725;
+            border-radius: 20px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #c2defa;
+            font-family: monospace;
+            border-left: 4px solid #2f8bc0;
+        }
+        .green { color: #8bcb9e; }
+        .red { color: #ffaaa2; }
+        .yellow { color: #f5e18b; }
+        .logout-btn { background: #1b2f42; color: #ffcf9a; border: 1px solid #4b6e8b; margin-top: 8px;}
+
+        /* Стили для журнала */
+        .journal-section {
+            background: #0e1a28;
+            border-radius: 28px;
+            border: 1px solid #2f6080;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .journal-header {
+            background: #0f1f30;
+            padding: 12px 18px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             cursor: pointer;
-            font-size: 0.7rem;
-            margin: 2px;
+            border-bottom: 1px solid #2a577a;
         }
-
-        .delete-post-btn {
-            background: #a13e2c;
+        .journal-title { font-size: 16px; color: #cce6ff; display: flex; gap: 8px; align-items: center; }
+        .journal-content {
+            padding: 12px;
+            max-height: 280px;
+            overflow-y: auto;
+            background: #0a1522;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
         }
-
-        .ban-user-btn {
-            background: #e67e22;
+        .journal-content.open { display: flex; }
+        .log-entry {
+            background: #101e2c;
+            border-radius: 18px;
+            padding: 10px 14px;
+            border-left: 3px solid #3f8bc0;
+            font-size: 12px;
+            font-family: monospace;
+            color: #cde2fc;
         }
-
-        .unban-user-btn {
-            background: #27ae60;
-        }
-
-        .author-sign {
-            font-size: 0.7rem;
-            color: #aac8e0;
-        }
-
-        .banned-row {
-            opacity: 0.6;
-            background: #2c2c2c;
-        }
-
-        .status-badge {
+        .log-entry strong { color: #ffd966; }
+        .badge-type {
             display: inline-block;
-            padding: 2px 8px;
+            background: #1f4d6e;
             border-radius: 20px;
-            font-size: 0.7rem;
+            padding: 2px 8px;
+            font-size: 10px;
+            margin-right: 8px;
         }
-
-        .alert {
-            background: #c0392b;
-            color: white;
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
+        .empty-log { color: #8aaec0; padding: 12px; text-align: center; font-style: italic; }
+        .badge-sm { background: #1d4059; border-radius: 30px; padding: 2px 12px; font-size: 10px; }
+        hr { border-color: #2a4b6a; margin: 6px 0; }
     </style>
 </head>
 <body>
-
-<!-- МОДАЛКА АВТОРИЗАЦИИ -->
-<div id="authModal" class="auth-overlay">
-    <div class="auth-card">
-        <h2>🚔 ГАИ База данных</h2>
-        <input type="text" id="loginUsername" placeholder="Логин" autocomplete="off">
-        <input type="password" id="loginPassword" placeholder="Пароль">
-        <button id="authBtn">Войти</button>
-        <div id="authError" class="error-msg"></div>
-        <div class="info-text">
-            <br>
-            👤 В логин списываем ваше ФИО.<br>
-            <span style="color:#ffd966;"></span>
-        </div>
+<div class="terminal" id="appUgai">
+    <div class="status-bar">
+        <span>🚔 УГАИ • ГУ МВД | ЖУРНАЛ УЧЁТА</span>
+        <span>⚡ ОНЛАЙН</span>
+        <span>🔋 100%</span>
     </div>
-</div>
-
-<!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
-<div id="mainApp" class="main-container">
-    <div class="header">
-        <div class="logo">
-            <h1>🚔 ГАИ · Управление базой</h1>
+    <div class="screen">
+        <!-- Авторизация -->
+        <div id="authBlock" class="auth-card">
+            <div class="auth-title"><span>🚦</span> УГАИ <span style="font-size:18px;">ГУ МВД</span></div>
+            <div class="auth-sub">• Система "Дорожный контроль" • Учет нарушений ПДД • Розыск ТС • Журнал операций</div>
+            <div class="input-group"><label>ФАМИЛИЯ СОТРУДНИКА</label><input type="text" id="surnameInput" class="input-field" placeholder="ИВАНОВ"></div>
+            <div class="input-group"><label>ПАРОЛЬ ДОСТУПА</label><input type="password" id="passwordInput" class="input-field" placeholder="••••••"></div>
+            <button id="loginBtn" class="btn btn-primary">🔐 ВОЙТИ В ТЕРМИНАЛ УГАИ</button>
+            <div id="authError" class="error-text" style="margin-top: 12px; text-align: center; color:#ffa098;"></div>
         </div>
-        <div class="user-info">
-            <span id="currentUserName">Загрузка...</span>
-            <span id="userRoleBadge"></span>
-            <button id="logoutMainBtn" class="logout-btn">Выйти</button>
-        </div>
-    </div>
 
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="posts">📋 Записи ГАИ</button>
-        <button class="tab-btn" data-tab="users" id="usersTabBtn">👥 Управление пользователями</button>
-        <button class="tab-btn" data-tab="stats">📊 Статистика</button>
-    </div>
-
-    <!-- Панель: Записи -->
-    <div id="postsPanel" class="panel active-panel">
-        <div class="form-card">
-            <h3 style="color:#ffde9c; margin-bottom:12px;">✍️ Добавить запись в базу</h3>
-            <div class="form-grid">
-                <input type="text" id="postPlate" placeholder="Гос. номер (А123ВС 116)">
-                <input type="text" id="postDriver" placeholder="Водитель (ФИО)">
-                <input type="text" id="postCar" placeholder="Марка/Модель">
-                <select id="postStatus">
-                    <option value="В норме">✅ В норме</option>
-                    <option value="В розыске">⚠️ В розыске</option>
-                    <option value="Угон">🔴 Угон</option>
-                    <option value="Лишение прав">📜 Лишение прав</option>
-                    <option value="Штраф">💰 Штраф</option>
-                </select>
-                <input type="number" id="postFine" placeholder="Штраф (₽)" value="0">
-                <textarea id="postNote" placeholder="Примечание" rows="1"></textarea>
-                <button id="addPostBtn" class="btn-primary">➕ Добавить запись</button>
+        <!-- Панель инспектора + Журнал -->
+        <div id="dashboardBlock" class="dashboard">
+            <div class="officer-header">
+                <div><div class="officer-name" id="displayOfficerName">Инспектор</div><div class="officer-id">УГАИ • ГУ МВД России • ID: 203048</div></div>
+                <div class="badge-sm">🔐 АВТОРИЗОВАН</div>
             </div>
-        </div>
 
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th><th>Госномер</th><th>Водитель</th><th>Авто</th>
-                        <th>Статус</th><th>Штраф</th><th>Примечание</th><th>Автор</th><th>Действия</th>
-                    </tr>
-                </thead>
-                <tbody id="postsTableBody">
-                    <tr><td colspan="9">Загрузка...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+            <div class="menu-grid">
+                <!-- ШТРАФ -->
+                <div class="action-card">
+                    <div class="card-header"><span>📋</span> <span>ВЫПИСАТЬ ШТРАФ (ПДД)</span></div>
+                    <div class="form-row">
+                        <input type="text" id="fineFio" class="small-input" placeholder="ФИО нарушителя">
+                        <input type="text" id="fineArticle" class="small-input" placeholder="Статья КоАП / Нарушение (напр. ч.2 ст.12.9)">
+                        <input type="text" id="fineSum" class="small-input" placeholder="Сумма штрафа (руб)">
+                        <input type="text" id="fineVehicle" class="small-input" placeholder="Гос. номер ТС (опционально)">
+                        <button id="issueFineBtn" class="btn" style="background:#1f6b5e;">📄 ОФОРМИТЬ ПОСТАНОВЛЕНИЕ</button>
+                        <div id="fineMessage" class="output-message"></div>
+                    </div>
+                </div>
 
-    <!-- Панель: Пользователи (только админ) -->
-    <div id="usersPanel" class="panel">
-        <h3 style="color:#ffde9c;">👥 Управление пользователями (Админ-панель)</h3>
-        <div class="table-wrapper" style="margin-top: 15px;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th><th>Логин</th><th>Роль</th><th>Статус</th><th>Дата регистрации</th><th>Кол-во записей</th><th>Действия</th>
-                    </tr>
-                </thead>
-                <tbody id="usersTableBody"></tbody>
-            </table>
-        </div>
-    </div>
+                <!-- РОЗЫСК / ОРИЕНТИРОВКА (граждане + ТС универсально) -->
+                <div class="action-card">
+                    <div class="card-header"><span>🚨</span> <span>РОЗЫСК / ОРИЕНТИРОВКА (ГУ МВД)</span></div>
+                    <div class="form-row">
+                        <div class="flex-row"><button id="tabPersonBtn" class="btn-outline btn" style="flex:1;">ГРАЖДАНИН</button><button id="tabAutoBtn" class="btn-outline btn" style="flex:1;">ТРАНСПОРТ</button></div>
+                        <div id="dynamicRekForm"><input type="text" id="searchPersonName" class="small-input" placeholder="ФИО разыскиваемого"><input type="text" id="personDetails" class="small-input" placeholder="Приметы / статья / описание"></div>
+                        <div class="flex-row"><button id="addWantedBtn" class="btn" style="background:#3b5e7a;">➕ В ОРИЕНТИРОВКУ</button><button id="searchWantedBtn" class="btn" style="background:#2c4c6e;">🔍 ПРОВЕРИТЬ</button></div>
+                        <div id="wantedResult" class="output-message"></div>
+                    </div>
+                </div>
 
-    <!-- Панель: Статистика -->
-    <div id="statsPanel" class="panel">
-        <h3 style="color:#ffde9c;">📈 Статистика базы ГАИ</h3>
-        <div id="statsContent"></div>
+                <!-- АВТОМОБИЛЬ В РОЗЫСКЕ (отдельный быстрый блок) -->
+                <div class="action-card">
+                    <div class="card-header"><span>🚗</span> <span>АВТОМОБИЛЬ В РОЗЫСКЕ (УГАИ)</span></div>
+                    <div class="form-row">
+                        <input type="text" id="carNumber" class="small-input" placeholder="Гос. номер / VIN">
+                        <div class="flex-row"><button id="addCarToWantedBtn" class="btn" style="background:#3b5e7a;">🚔 ОБЪЯВИТЬ В РОЗЫСК</button><button id="checkCarWantedBtn" class="btn" style="background:#2c4c6e;">🔍 ПРОВЕРИТЬ АВТО</button></div>
+                        <div id="carWantedMessage" class="output-message"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- БЛОК ЖУРНАЛА ИСТОРИИ (штрафы, ориентировки, розыск ТС) -->
+            <div class="journal-section" id="journalSection">
+                <div class="journal-header" id="journalToggle">
+                    <div class="journal-title"><span>📜</span> ЖУРНАЛ УЧЁТА (история операций)</div>
+                    <span id="toggleIcon">▼</span>
+                </div>
+                <div class="journal-content" id="journalContent">
+                    <!-- динамически заполняется -->
+                    <div class="empty-log">Загрузка истории...</div>
+                </div>
+            </div>
+
+            <button id="logoutBtn" class="btn logout-btn">🔚 ЗАВЕРШИТЬ СЕАНС</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // ========== КЛЮЧИ ХРАНИЛИЩА ==========
-    const STORAGE_USERS = 'gai_users_system';
-    const STORAGE_POSTS = 'gai_posts_system';
-    const SESSION_KEY = 'gai_current_session';
+    // --------------------------------------------------------------
+    // БАЗЫ ДАННЫХ УГАИ (ГУ МВД) + ГЛОБАЛЬНЫЙ ЖУРНАЛ
+    // --------------------------------------------------------------
+    let wantedPersons = [];       // граждане в розыске
+    let wantedCars = [];          // авто в розыске
+    let globalLog = [];           // единый журнал {id, type, title, details, timestamp, officer}
 
-    // СПЕЦИАЛЬНЫЙ АДМИН-ДОСТУП
-    const ADMIN_CREDENTIALS = {
-        username: "qwerzv715",
-        password: "14122008bk"
-    };
-
-    // Стартовые демо-пользователи (кроме админа)
-    let users = [];
-    let posts = [];
-    let currentUser = null;
-
-    // Инициализация
-    function initStorage() {
-        let storedUsers = localStorage.getItem(STORAGE_USERS);
-        if (!storedUsers) {
-            users = [
-                { id: 1, username: "user1", password: "pass123", role: "user", isBanned: false, registered: new Date().toISOString().slice(0,10) },
-                { id: 2, username: "user2", password: "pass123", role: "user", isBanned: false, registered: new Date().toISOString().slice(0,10) }
-            ];
-            localStorage.setItem(STORAGE_USERS, JSON.stringify(users));
-        } else {
-            users = JSON.parse(storedUsers);
-        }
-
-        let storedPosts = localStorage.getItem(STORAGE_POSTS);
-        if (!storedPosts) {
-            posts = [
-                { id: 101, plate: "А777АА 116", driver: "Соколов Дмитрий", carModel: "Lada Vesta", status: "В норме", fine: 0, note: "ОСАГО в порядке", author: "user1", createdAt: new Date().toISOString() },
-                { id: 102, plate: "В123ВС 777", driver: "Кузнецова Анна", carModel: "Hyundai Solaris", status: "Штраф", fine: 2500, note: "Превышение скорости", author: "user2", createdAt: new Date().toISOString() },
-                { id: 103, plate: "О111ОО 50", driver: "Морозов Артем", carModel: "BMW X5", status: "В розыске", fine: 0, note: "Ориентировка!", author: "user1", createdAt: new Date().toISOString() }
-            ];
-            localStorage.setItem(STORAGE_POSTS, JSON.stringify(posts));
-        } else {
-            posts = JSON.parse(storedPosts);
-        }
-    }
-
-    function saveUsers() { localStorage.setItem(STORAGE_USERS, JSON.stringify(users)); }
-    function savePosts() { localStorage.setItem(STORAGE_POSTS, JSON.stringify(posts)); }
-
-    // Авторизация
-    function authUser(login, password) {
-        // Проверка на спец-админа
-        if (login === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-            // Создаем или получаем админа в базе
-            let adminUser = users.find(u => u.username === "GAIA_ADMIN");
-            if (!adminUser) {
-                adminUser = {
-                    id: users.length + 1,
-                    username: "qwerzv715",
-                    password: "14122008bk",
-                    role: "admin",
-                    isBanned: false,
-                    registered: new Date().toISOString().slice(0,10)
-                };
-                users.push(adminUser);
-                saveUsers();
+    // Начальные демо-данные (для наглядности)
+    function initDemoData() {
+        if(wantedPersons.length === 0) {
+            wantedPersons.push({ id: "wp1", fullName: "СОКОЛОВ АНДРЕЙ ВИКТОРОВИЧ", description: "Разыскивается за угон ТС, тату" });
+            wantedPersons.push({ id: "wp2", fullName: "МЕЛЬНИКОВА ИРИНА ПЕТРОВНА", description: "Мошенничество с документами на авто" });
+            wantedCars.push({ id: "wc1", plate: "А777МР 116", description: "Toyota Camry, черный, угнан 12.03.2025" });
+            wantedCars.push({ id: "wc2", plate: "В444КХ 77", description: "Lada Granta, белая, скрылась с места ДТП" });
+            // добавим в журнал стартовые записи (как уже существующие)
+            if(globalLog.length === 0){
+                globalLog.push({ id: "log_init1", type: "РОЗЫСК_ГРАЖДАНИН", title: "СОКОЛОВ АНДРЕЙ ВИКТОРОВИЧ", details: "Разыскивается за угон ТС, тату", timestamp: new Date().toLocaleString(), officer: "СИСТЕМА" });
+                globalLog.push({ id: "log_init2", type: "РОЗЫСК_АВТО", title: "А777МР 116", details: "Toyota Camry, черный, угнан", timestamp: new Date().toLocaleString(), officer: "СИСТЕМА" });
             }
-            return { ...adminUser, isSpecialAdmin: true };
         }
-        
-        // Обычная авторизация
-        let user = users.find(u => u.username === login && u.password === password);
-        if (user && !user.isBanned) {
-            return { ...user };
-        }
-        if (user && user.isBanned) {
-            throw new Error("ban");
-        }
-        return null;
     }
+    initDemoData();
 
-    // Авто-регистрация нового пользователя
-    function registerUser(login, password) {
-        if (users.find(u => u.username === login)) {
-            return null;
-        }
-        const newUser = {
-            id: users.length + 1,
-            username: login,
-            password: password,
-            role: "user",
-            isBanned: false,
-            registered: new Date().toISOString().slice(0,10)
+    const VALID_PASSWORD = "203048";
+    let currentOfficer = null;
+
+    // DOM элементы
+    const authBlock = document.getElementById('authBlock');
+    const dashboardBlock = document.getElementById('dashboardBlock');
+    const surnameInput = document.getElementById('surnameInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const loginBtn = document.getElementById('loginBtn');
+    const authErrorSpan = document.getElementById('authError');
+    const displayOfficerNameSpan = document.getElementById('displayOfficerName');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // Штраф
+    const fineFio = document.getElementById('fineFio');
+    const fineArticle = document.getElementById('fineArticle');
+    const fineSum = document.getElementById('fineSum');
+    const fineVehicle = document.getElementById('fineVehicle');
+    const issueFineBtn = document.getElementById('issueFineBtn');
+    const fineMessageDiv = document.getElementById('fineMessage');
+
+    // Розыскные элементы
+    const tabPersonBtn = document.getElementById('tabPersonBtn');
+    const tabAutoBtn = document.getElementById('tabAutoBtn');
+    const dynamicRekForm = document.getElementById('dynamicRekForm');
+    const addWantedBtn = document.getElementById('addWantedBtn');
+    const searchWantedBtn = document.getElementById('searchWantedBtn');
+    const wantedResultDiv = document.getElementById('wantedResult');
+    const carNumberInput = document.getElementById('carNumber');
+    const addCarToWantedBtn = document.getElementById('addCarToWantedBtn');
+    const checkCarWantedBtn = document.getElementById('checkCarWantedBtn');
+    const carWantedMessage = document.getElementById('carWantedMessage');
+
+    // Журнал
+    const journalContent = document.getElementById('journalContent');
+    const journalToggle = document.getElementById('journalToggle');
+    const toggleIcon = document.getElementById('toggleIcon');
+    let journalOpen = true;
+
+    // ---- Функция добавления записи в ЖУРНАЛ ----
+    function addToLog(type, title, details) {
+        const logEntry = {
+            id: Date.now() + Math.random(),
+            type: type,      // "ШТРАФ", "РОЗЫСК_ГРАЖДАНИН", "РОЗЫСК_АВТО"
+            title: title,
+            details: details,
+            timestamp: new Date().toLocaleString(),
+            officer: currentOfficer || "СИСТЕМА"
         };
-        users.push(newUser);
-        saveUsers();
-        return newUser;
+        globalLog.unshift(logEntry); // новые сверху
+        renderJournal();
     }
 
-    // Бан пользователя (только админ)
-    function banUser(username) {
-        const user = users.find(u => u.username === username);
-        if (user && user.role !== "admin") {
-            user.isBanned = true;
-            saveUsers();
-            return true;
+    // Отрисовка журнала
+    function renderJournal() {
+        if(!journalContent) return;
+        if(globalLog.length === 0) {
+            journalContent.innerHTML = '<div class="empty-log">📭 История пуста. Совершите действия.</div>';
+            return;
         }
-        return false;
-    }
-
-    // Разбан
-    function unbanUser(username) {
-        const user = users.find(u => u.username === username);
-        if (user) {
-            user.isBanned = false;
-            saveUsers();
-            return true;
-        }
-        return false;
-    }
-
-    // Удалить пользователя и все его посты
-    function deleteUser(username) {
-        if (username === "GAIA_ADMIN") return false;
-        users = users.filter(u => u.username !== username);
-        posts = posts.filter(p => p.author !== username);
-        saveUsers();
-        savePosts();
-        return true;
-    }
-
-    // Добавить пост
-    function addPost(plate, driver, carModel, status, fine, note) {
-        if (!plate || !driver || !carModel) {
-            alert('Заполните госномер, водителя и марку авто!');
-            return false;
-        }
-        const newId = posts.length > 0 ? Math.max(...posts.map(p=>p.id)) + 1 : 200;
-        const newPost = {
-            id: newId,
-            plate: plate.trim(),
-            driver: driver.trim(),
-            carModel: carModel.trim(),
-            status: status,
-            fine: parseInt(fine) || 0,
-            note: note.trim(),
-            author: currentUser.username,
-            createdAt: new Date().toISOString()
-        };
-        posts.unshift(newPost);
-        savePosts();
-        return true;
-    }
-
-    // Удалить пост (админ может всё, пользователь только свои)
-    function deletePost(postId) {
-        const post = posts.find(p => p.id === postId);
-        if (!post) return false;
-        if (currentUser.role === 'admin' || post.author === currentUser.username) {
-            posts = posts.filter(p => p.id !== postId);
-            savePosts();
-            return true;
-        }
-        return false;
-    }
-
-    // Рендер постов
-    function renderPosts() {
-        const tbody = document.getElementById('postsTableBody');
         let html = '';
-        posts.forEach(post => {
-            const isAdmin = currentUser.role === 'admin';
-            const isAuthor = post.author === currentUser.username;
-            const canDelete = isAdmin || isAuthor;
-            
-            // Проверка, не забанен ли автор
-            const authorUser = users.find(u => u.username === post.author);
-            const isAuthorBanned = authorUser?.isBanned;
-            
-            html += `<tr style="${isAuthorBanned ? 'opacity:0.6' : ''}">
-                <td>${post.id}</td>
-                <td><strong>${escapeHtml(post.plate)}</strong></td>
-                <td>${escapeHtml(post.driver)}</td>
-                <td>${escapeHtml(post.carModel)}</td>
-                <td>${post.status}</td>
-                <td>${post.fine.toLocaleString()} ₽</td>
-                <td>${escapeHtml(post.note || '—')}</td>
-                <td><div class="author-sign">✍️ ${escapeHtml(post.author)}<br><small>${new Date(post.createdAt).toLocaleDateString()}</small></div></td>
-                <td>${canDelete ? `<button class="delete-post-btn" data-id="${post.id}">🗑 Удалить</button>` : '—'}</td>
-            </tr>`;
+        globalLog.forEach(entry => {
+            let typeIcon = "";
+            if(entry.type === "ШТРАФ") typeIcon = "💰";
+            else if(entry.type === "РОЗЫСК_ГРАЖДАНИН") typeIcon = "👤";
+            else if(entry.type === "РОЗЫСК_АВТО") typeIcon = "🚗";
+            else typeIcon = "📌";
+            html += `
+                <div class="log-entry">
+                    <div><span class="badge-type">${typeIcon} ${entry.type}</span> <strong>${escapeHtml(entry.title)}</strong></div>
+                    <div style="font-size:11px; margin-top:6px;">📝 ${escapeHtml(entry.details)}</div>
+                    <div style="font-size:10px; color:#8db2d0; margin-top:6px;">🕘 ${entry.timestamp} | 👮 ${entry.officer}</div>
+                </div>
+            `;
         });
-        if (posts.length === 0) html = '<tr><td colspan="9">Нет записей в базе</td></tr>';
-        tbody.innerHTML = html;
+        journalContent.innerHTML = html;
+    }
 
-        document.querySelectorAll('.delete-post-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = parseInt(btn.getAttribute('data-id'));
-                if (confirm('Удалить эту запись из базы ГАИ?')) {
-                    if (deletePost(id)) {
-                        renderPosts();
-                        renderUsers();
-                        renderStats();
-                    } else {
-                        alert('Нет прав на удаление!');
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    // ---- Выписка штрафа + запись в журнал ----
+    function issueFine() {
+        let fio = fineFio.value.trim();
+        let article = fineArticle.value.trim();
+        let sumRaw = fineSum.value.trim();
+        let vehicle = fineVehicle.value.trim();
+        if (!fio || !article || !sumRaw) {
+            fineMessageDiv.innerHTML = "<span class='red'>Заполните ФИО, статью и сумму штрафа</span>";
+            return;
+        }
+        let sumNumber = parseInt(sumRaw);
+        if (isNaN(sumNumber) || sumNumber <= 0) {
+            fineMessageDiv.innerHTML = "<span class='red'>Введите корректную сумму</span>";
+            return;
+        }
+        const timestamp = new Date().toLocaleString();
+        const details = `Статья: ${article}, сумма: ${sumNumber} руб., ТС: ${vehicle || "не указано"}`;
+        addToLog("ШТРАФ", `Штраф на гражданина ${fio}`, details);
+        fineMessageDiv.innerHTML = `<span class='green'>✅ Штраф выписан!<br>👤 ${fio} | ${article} | ${sumNumber} руб.<br>👮‍♂️ Инспектор: ${currentOfficer}</span>`;
+        fineFio.value = ""; fineArticle.value = ""; fineSum.value = ""; fineVehicle.value = "";
+        setTimeout(() => { if(fineMessageDiv) fineMessageDiv.innerHTML = ""; }, 4000);
+    }
+
+    // ---- Добавление гражданина в розыск + журнал ----
+    function addWantedPersonLogic() {
+        let nameField = document.getElementById('searchPersonName');
+        let descField = document.getElementById('personDetails');
+        if (!nameField) { wantedResultDiv.innerHTML = "<span class='red'>Ошибка, выберите вкладку Гражданин</span>"; return; }
+        let fullName = nameField.value.trim().toUpperCase();
+        let details = descField.value.trim();
+        if (fullName === "") { wantedResultDiv.innerHTML = "<span class='red'>Введите ФИО разыскиваемого</span>"; return; }
+        wantedPersons.push({ id: "wp_"+Date.now(), fullName: fullName, description: details || "Ориентировка ГУ МВД" });
+        addToLog("РОЗЫСК_ГРАЖДАНИН", `Гражданин ${fullName}`, `Ориентировка: ${details || "без дополнительных данных"}`);
+        wantedResultDiv.innerHTML = `<span class='green'>✅ Ориентировка добавлена! ${fullName} в розыске.</span>`;
+        nameField.value = ""; if(descField) descField.value = "";
+        setTimeout(() => wantedResultDiv.innerHTML = "", 3000);
+    }
+
+    // Поиск гражданина (без записи в журнал, просто проверка)
+    function searchPerson() {
+        let nameField = document.getElementById('searchPersonName');
+        if(!nameField) { wantedResultDiv.innerHTML = "<span class='red'>Выберите вкладку Гражданин</span>"; return; }
+        let query = nameField.value.trim().toUpperCase();
+        if(query === "") { wantedResultDiv.innerHTML = "<span class='yellow'>Введите ФИО для проверки</span>"; return; }
+        let found = wantedPersons.filter(p => p.fullName.includes(query));
+        if(found.length>0) {
+            let html = `<span class='red'>🚨 РАЗЫСКИВАЕТСЯ!</span><br>`;
+            found.forEach(p => { html += `<div class='search-result'>📌 ${p.fullName}<br>📝 ${p.description}</div>`; });
+            wantedResultDiv.innerHTML = html;
+        } else { wantedResultDiv.innerHTML = `<span class='green'>✅ Гражданин не числится в розыске.</span>`; }
+    }
+
+    // Автомобиль отдельный блок + журнал
+    function addCarWanted() {
+        let plate = carNumberInput.value.trim().toUpperCase();
+        if(plate === "") { carWantedMessage.innerHTML = "<span class='red'>Введите госномер</span>"; return; }
+        if(wantedCars.some(c => c.plate === plate)) { carWantedMessage.innerHTML = "<span class='yellow'>Авто уже в розыске</span>"; return; }
+        wantedCars.push({ id: "wc"+Date.now(), plate: plate, description: "Объявлен в розыск инспектором УГАИ" });
+        addToLog("РОЗЫСК_АВТО", `Автомобиль ${plate}`, `Объявлен в розыск сотрудником ${currentOfficer}`);
+        carWantedMessage.innerHTML = `<span class='green'>🚔 Авто ${plate} добавлено в розыскную базу.</span>`;
+        carNumberInput.value = "";
+        setTimeout(() => carWantedMessage.innerHTML = "", 3000);
+    }
+
+    function checkCarWanted() {
+        let plate = carNumberInput.value.trim().toUpperCase();
+        if(plate === "") { carWantedMessage.innerHTML = "<span class='yellow'>Введите номер для проверки</span>"; return; }
+        let found = wantedCars.find(c => c.plate === plate);
+        if(found) { carWantedMessage.innerHTML = `<span class='red'>⚠️ АВТО В РОЗЫСКЕ! ${found.plate} - ${found.description}</span>`; }
+        else { carWantedMessage.innerHTML = `<span class='green'>✅ Автомобиль не в розыске.</span>`; }
+    }
+
+    // Динамические формы розыска (вкладки)
+    function setPersonForm() { dynamicRekForm.innerHTML = `<input type="text" id="searchPersonName" class="small-input" placeholder="ФИО разыскиваемого"><input type="text" id="personDetails" class="small-input" placeholder="Приметы / статья / описание">`; rebindWantedButtons(); }
+    function setAutoForm() { dynamicRekForm.innerHTML = `<input type="text" id="searchAutoPlate" class="small-input" placeholder="Гос. номер автомобиля (розыск/проверка)"><input type="text" id="autoDetails" class="small-input" placeholder="Марка, цвет, особые признаки">`; rebindWantedButtons(); }
+    function rebindWantedButtons() {
+        const newAdd = document.getElementById('addWantedBtn');
+        const newSearch = document.getElementById('searchWantedBtn');
+        if(newAdd) newAdd.replaceWith(newAdd.cloneNode(true));
+        if(newSearch) newSearch.replaceWith(newSearch.cloneNode(true));
+        const finalAdd = document.getElementById('addWantedBtn');
+        const finalSearch = document.getElementById('searchWantedBtn');
+        if(finalAdd && finalSearch) {
+            finalAdd.addEventListener('click', () => {
+                const personMode = document.getElementById('searchPersonName') !== null;
+                if(personMode) addWantedPersonLogic();
+                else {
+                    let plateField = document.getElementById('searchAutoPlate');
+                    let descField = document.getElementById('autoDetails');
+                    if(plateField) {
+                        let plate = plateField.value.trim().toUpperCase();
+                        let desc = descField ? descField.value.trim() : "";
+                        if(!plate) { wantedResultDiv.innerHTML = "<span class='red'>Введите госномер</span>"; return; }
+                        if(wantedCars.some(c => c.plate === plate)) { wantedResultDiv.innerHTML = "<span class='yellow'>Авто уже в розыске</span>"; return; }
+                        wantedCars.push({ id: "wc"+Date.now(), plate: plate, description: desc || "Ориентировка УГАИ" });
+                        addToLog("РОЗЫСК_АВТО", `Автомобиль ${plate}`, `Ориентировка: ${desc || "стандартная"}`);
+                        wantedResultDiv.innerHTML = `<span class='green'>🚗 Авто ${plate} добавлено в розыск.</span>`;
+                        plateField.value = ""; if(descField) descField.value = "";
+                        setTimeout(() => wantedResultDiv.innerHTML = "", 2500);
                     }
                 }
             });
-        });
-    }
-
-    // Рендер пользователей (только для админа)
-    function renderUsers() {
-        if (currentUser.role !== 'admin') return;
-        const tbody = document.getElementById('usersTableBody');
-        let html = '';
-        users.forEach(user => {
-            const userPostsCount = posts.filter(p => p.author === user.username).length;
-            html += `<tr>
-                <td>${user.id}</td>
-                <td>${escapeHtml(user.username)} ${user.username === "GAIA_ADMIN" ? '👑' : ''}</td>
-                <td>${user.role === 'admin' ? '⚡ Администратор' : '👤 Пользователь'}</td>
-                <td>${user.isBanned ? '<span class="status-badge" style="background:#c0392b;">🔨 Забанен</span>' : '<span class="status-badge" style="background:#27ae60;">✅ Активен</span>'}</td>
-                <td>${user.registered}</td>
-                <td>${userPostsCount}</td>
-                <td>
-                    ${user.username !== currentUser.username && user.username !== "GAIA_ADMIN" ? 
-                        (user.isBanned ? 
-                            `<button class="unban-user-btn" data-user="${user.username}">🔓 Разбан</button>` : 
-                            `<button class="ban-user-btn" data-user="${user.username}">🔨 Забанить</button>`
-                        ) : ''}
-                    ${user.username !== "GAIA_ADMIN" && user.role !== 'admin' && user.username !== currentUser.username ? 
-                        `<button class="delete-post-btn" data-deluser="${user.username}" style="background:#8b3c2c;">❌ Удалить пользователя</button>` : ''}
-                </td>
-            </tr>`;
-        });
-        tbody.innerHTML = html;
-
-        document.querySelectorAll('.ban-user-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const username = btn.getAttribute('data-user');
-                if (confirm(`Забанить пользователя "${username}"? Он не сможет войти и его записи будут скрыты.`)) {
-                    banUser(username);
-                    renderUsers();
-                    renderPosts();
-                    renderStats();
+            finalSearch.addEventListener('click', () => {
+                const personMode = document.getElementById('searchPersonName') !== null;
+                if(personMode) searchPerson();
+                else {
+                    let plateField = document.getElementById('searchAutoPlate');
+                    if(plateField) {
+                        let plate = plateField.value.trim().toUpperCase();
+                        if(!plate) { wantedResultDiv.innerHTML = "<span class='yellow'>Введите номер для проверки</span>"; return; }
+                        let found = wantedCars.find(c => c.plate === plate);
+                        if(found) wantedResultDiv.innerHTML = `<span class='red'>⚠️ АВТО В РОЗЫСКЕ! ${found.plate} - ${found.description}</span>`;
+                        else wantedResultDiv.innerHTML = `<span class='green'>Автомобиль не в розыске</span>`;
+                    }
                 }
             });
+        }
+    }
+
+    function attachDashboardEvents() {
+        issueFineBtn?.removeEventListener('click', issueFine); issueFineBtn?.addEventListener('click', issueFine);
+        addCarToWantedBtn?.removeEventListener('click', addCarWanted); addCarToWantedBtn?.addEventListener('click', addCarWanted);
+        checkCarWantedBtn?.removeEventListener('click', checkCarWanted); checkCarWantedBtn?.addEventListener('click', checkCarWanted);
+        tabPersonBtn?.removeEventListener('click', setPersonForm); tabPersonBtn?.addEventListener('click', setPersonForm);
+        tabAutoBtn?.removeEventListener('click', setAutoForm); tabAutoBtn?.addEventListener('click', setAutoForm);
+        setPersonForm(); rebindWantedButtons();
+    }
+
+    function renderDashboardUI(surname) {
+        displayOfficerNameSpan.innerText = surname.toUpperCase() + " | СТ. ИНСПЕКТОР УГАИ";
+        fineMessageDiv.innerHTML = ""; wantedResultDiv.innerHTML = ""; carWantedMessage.innerHTML = "";
+        fineFio.value = ""; fineArticle.value = ""; fineSum.value = ""; fineVehicle.value = ""; carNumberInput.value = "";
+        renderJournal();
+    }
+
+    function performLogin() {
+        let surname = surnameInput.value.trim().toUpperCase();
+        let password = passwordInput.value.trim();
+        if(surname === "") { showAuthError("Введите фамилию сотрудника"); return; }
+        if(password !== VALID_PASSWORD) { showAuthError("Неверный пароль. Доступ запрещён."); return; }
+        currentOfficer = surname;
+        authBlock.style.display = "none";
+        dashboardBlock.style.display = "block";
+        renderDashboardUI(surname);
+        attachDashboardEvents();
+    }
+    function showAuthError(msg) { authErrorSpan.innerText = msg; setTimeout(() => authErrorSpan.innerText = '', 3000); }
+    function logout() { currentOfficer = null; authBlock.style.display = "block"; dashboardBlock.style.display = "none"; surnameInput.value = ""; passwordInput.value = ""; authErrorSpan.innerText = ""; }
+
+    loginBtn.addEventListener('click', performLogin);
+    logoutBtn.addEventListener('click', logout);
+    surnameInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') performLogin(); });
+    passwordInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') performLogin(); });
+    if(journalToggle) {
+        journalToggle.addEventListener('click', () => {
+            journalOpen = !journalOpen;
+            journalContent.classList.toggle('open', journalOpen);
+            toggleIcon.innerText = journalOpen ? "▼" : "▲";
         });
-
-        document.querySelectorAll('.unban-user-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const username = btn.getAttribute('data-user');
-                unbanUser(username);
-                renderUsers();
-                renderPosts();
-                renderStats();
-            });
-        });
-
-        document.querySelectorAll('[data-deluser]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const username = btn.getAttribute('data-deluser');
-                if (confirm(`УДАЛИТЬ пользователя "${username}" и ВСЕ его записи? Это действие необратимо!`)) {
-                    deleteUser(username);
-                    renderUsers();
-                    renderPosts();
-                    renderStats();
-                }
-            });
-        });
+        journalContent.classList.add('open');
     }
-
-    function renderStats() {
-        const statsDiv = document.getElementById('statsContent');
-        const activeUsers = users.filter(u => !u.isBanned).length;
-        const bannedUsers = users.filter(u => u.isBanned).length;
-        const totalPosts = posts.length;
-        const wantedCount = posts.filter(p => p.status === 'В розыске').length;
-        const totalFine = posts.reduce((sum, p) => sum + p.fine, 0);
-        
-        const authorStats = {};
-        posts.forEach(p => { authorStats[p.author] = (authorStats[p.author] || 0) + 1; });
-        let topAuthors = Object.entries(authorStats).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([name,count])=>`${name} (${count})`).join(', ');
-        
-        statsDiv.innerHTML = `
-            <div style="background:#0b1a24; padding:1.5rem; border-radius:1rem;">
-                <p>📋 Всего записей: <strong>${totalPosts}</strong></p>
-                <p>⚠️ В розыске: ${wantedCount}</p>
-                <p>💰 Общая сумма штрафов: ${totalFine.toLocaleString()} ₽</p>
-                <p>✍️ Топ авторы: ${topAuthors || 'нет'}</p>
-                <p>👥 Активных пользователей: ${activeUsers} | Забаненных: ${bannedUsers}</p>
-                <p>👑 Администратор: ${currentUser.username}</p>
-            </div>
-        `;
-    }
-
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ return m==='&'?'&amp;': m==='<'?'&lt;':'&gt;';}); }
-
-    function switchTab(tabId) {
-        document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active-panel'));
-        document.getElementById(`${tabId}Panel`).classList.add('active-panel');
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
-        if (tabId === 'users') renderUsers();
-        if (tabId === 'stats') renderStats();
-        if (tabId === 'posts') renderPosts();
-    }
-
-    function loadMainApp(user) {
-        currentUser = user;
-        document.getElementById('currentUserName').innerHTML = `${user.username}`;
-        const badgeSpan = document.getElementById('userRoleBadge');
-        if (user.role === 'admin') {
-            badgeSpan.innerHTML = '<span class="badge-admin">👑 АДМИНИСТРАТОР (полный доступ)</span>';
-            document.getElementById('usersTabBtn').style.display = 'inline-block';
-        } else {
-            badgeSpan.innerHTML = '<span class="badge-user">👤 Пользователь</span>';
-            document.getElementById('usersTabBtn').style.display = 'none';
-        }
-        renderPosts();
-        renderStats();
-        document.getElementById('authModal').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
-    }
-
-    // Обработчики
-    document.getElementById('authBtn').addEventListener('click', () => {
-        const login = document.getElementById('loginUsername').value.trim();
-        const pass = document.getElementById('loginPassword').value.trim();
-        if (!login || !pass) {
-            document.getElementById('authError').innerText = 'Введите логин и пароль';
-            return;
-        }
-        try {
-            let user = authUser(login, pass);
-            if (user) {
-                localStorage.setItem(SESSION_KEY, JSON.stringify({ username: user.username, role: user.role }));
-                loadMainApp(user);
-            } else {
-                // Пытаемся зарегистрировать нового пользователя
-                const newUser = registerUser(login, pass);
-                if (newUser) {
-                    alert(`Добро пожаловать, ${login}! Вы зарегистрированы как обычный пользователь.`);
-                    localStorage.setItem(SESSION_KEY, JSON.stringify({ username: newUser.username, role: newUser.role }));
-                    loadMainApp(newUser);
-                } else {
-                    document.getElementById('authError').innerText = 'Неверный логин или пароль, или пользователь забанен';
-                }
-            }
-        } catch(e) {
-            if (e.message === 'ban') {
-                document.getElementById('authError').innerText = '❌ Ваш аккаунт заблокирован администратором!';
-            } else {
-                document.getElementById('authError').innerText = 'Ошибка авторизации';
-            }
-        }
-    });
-
-    document.getElementById('logoutMainBtn').addEventListener('click', () => {
-        localStorage.removeItem(SESSION_KEY);
-        location.reload();
-    });
-
-    document.getElementById('addPostBtn').addEventListener('click', () => {
-        const plate = document.getElementById('postPlate').value;
-        const driver = document.getElementById('postDriver').value;
-        const car = document.getElementById('postCar').value;
-        const status = document.getElementById('postStatus').value;
-        const fine = document.getElementById('postFine').value;
-        const note = document.getElementById('postNote').value;
-        if(addPost(plate, driver, car, status, fine, note)) {
-            document.getElementById('postPlate').value = '';
-            document.getElementById('postDriver').value = '';
-            document.getElementById('postCar').value = '';
-            document.getElementById('postNote').value = '';
-            document.getElementById('postFine').value = '0';
-            renderPosts();
-            renderStats();
-            if (document.getElementById('usersPanel').classList.contains('active-panel')) renderUsers();
-            alert('Запись добавлена!');
-        }
-    });
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
-    });
-
-    function checkSession() {
-        const session = localStorage.getItem(SESSION_KEY);
-        if (session) {
-            try {
-                const sessUser = JSON.parse(session);
-                let found = users.find(u => u.username === sessUser.username && !u.isBanned);
-                if (found && found.role === sessUser.role) {
-                    loadMainApp(found);
-                    return;
-                } else if (sessUser.username === "GAIA_ADMIN") {
-                    let admin = users.find(u => u.username === "GAIA_ADMIN");
-                    if (admin) loadMainApp(admin);
-                    return;
-                }
-            } catch(e) {}
-        }
-        document.getElementById('authModal').style.display = 'flex';
-        document.getElementById('mainApp').style.display = 'none';
-    }
-
-    initStorage();
-    checkSession();
+    authBlock.style.display = "block";
+    dashboardBlock.style.display = "none";
+    renderJournal();
 </script>
 </body>
 </html>
